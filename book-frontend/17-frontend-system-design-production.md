@@ -8,6 +8,21 @@
 
 อ่านบทนี้เหมือนกำลังซ้อมคิดออกเสียงต่อหน้า interviewer หรือเพื่อนร่วมทีม ทุก framework, trade-off และ production concern ที่พูดถึงควรโยงกลับไปยังบทก่อนหน้าได้ชัดเจน ยิ่งโยงได้มาก บทสุดท้ายเรื่อง interview execution จะยิ่งใช้ได้จริง
 
+## ศัพท์แกนก่อนเข้าโจทย์
+
+บทนี้ใช้คำย่อและคำเทคนิคหลายตัวตั้งแต่ต้น ถ้าไม่ปูพื้นก่อน คนอ่านจะรู้สึกเหมือนถูกโยนเข้ากลางบทสนทนาที่ทุกคนรู้ศัพท์กันอยู่แล้ว เลยขอสรุปความหมายแบบเร็วแต่พอจับภาพได้ก่อน:
+
+- **CSR (Client-Side Rendering)** = browser โหลด JavaScript มาก้อนหนึ่งแล้วค่อยประกอบ UI เองเป็นหลัก
+- **SSR (Server-Side Rendering)** = server สร้าง HTML มาให้ก่อน เพื่อให้หน้าแรกขึ้นเร็วและ crawler เห็นเนื้อหาได้
+- **SSG (Static Site Generation)** = สร้าง HTML ล่วงหน้าตอน build แล้วเสิร์ฟไฟล์สำเร็จรูปผ่าน CDN
+- **ISR (Incremental Static Regeneration)** = หน้า static ที่ยอมให้ regenerate ใหม่เป็นช่วง ๆ ไม่ต้องสดทุก request
+- **RSC (React Server Components)** = component ที่รันฝั่ง server แล้วส่งผลลัพธ์มาผสมกับ client component เพื่อลดงานใน browser
+- **BFF (Backend for Frontend)** = service ชั้นบาง ๆ ที่รวม/ตัด shape ของข้อมูลให้เหมาะกับหน้าจอ แทนให้ frontend ไปประกอบหลาย API เอง
+- **CWV (Core Web Vitals)** = ชุด metric หลักของประสบการณ์ใช้งานบนเว็บ เช่น LCP, INP, CLS (อธิบายเต็มในบท 13)
+- **RUM (Real User Monitoring)** = การเก็บ metric จากเครื่องผู้ใช้จริง ไม่ใช่จาก lab จำลอง
+
+ถ้าจะสรุปบทนี้ในประโยคเดียว: เรากำลังคุยเรื่อง **การออกแบบ frontend ทั้งระบบ** ตั้งแต่เลือกวิธี render, จัดบ้าน state, ออกแบบรอยต่อกับ API, ไปจนถึงการปล่อยของจริงและไล่ปัญหาใน production
+
 ## Framework 10 ขั้น — โครงที่ทำให้ไม่หลงป่า
 
 Frontend system design ต่างจากฝั่ง backend (เล่ม backend บท 18) ตรงที่ไม่มี capacity estimation หนักๆ แต่มีสิ่งที่ backend ไม่มี: **user ยืนอยู่หน้าจอจริงๆ** — ทุก state ที่มองข้าม (loading, error, empty, offline) คือหน้าจอที่ user เห็นจริง framework นี้เหมือน checklist นักบินก่อนบิน: ไม่ได้มีไว้โชว์ว่าท่องได้ แต่มีไว้กันลืมเรื่องที่ถ้าลืมแล้วตก
