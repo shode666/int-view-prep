@@ -60,6 +60,8 @@ const withRetry = (times: number) => (fn: () => Promise<unknown>) => {
 | 3 | **implicit binding** | `obj.fn()` | object หน้าจุด |
 | 4 | **default binding** | `fn()` เรียกโดด ๆ | `undefined` (strict mode) / `globalThis` (sloppy) |
 
+("strict mode" คือโหมดที่ JS ตัดพฤติกรรมหลวม ๆ อันตรายทิ้ง เปิดด้วย `'use strict'` — และ ES module ทุกไฟล์กับ body ของ `class` เป็น strict อัตโนมัติ ส่วน "sloppy mode" คือโหมดดั้งเดิมที่ไม่ได้เปิด strict ในทางปฏิบัติโค้ดสมัยใหม่แทบเป็น strict หมด ดังนั้น default binding ที่เจอจริงมักได้ `undefined` — ซึ่งเป็นเหตุที่บั๊ก "this หาย" กลายเป็น error ดังแทนที่จะเงียบ ๆ ไปเกาะ global)
+
 ส่วน **arrow function ไม่มี this ของตัวเอง** — มันหยิบ `this` จาก scope ที่ล้อมรอบตอนประกาศ (เหมือนตัวแปรธรรมดาตัวหนึ่งใน closure) และ `call/bind` เปลี่ยนมันไม่ได้
 
 บั๊กจริงที่เจอประจำ — method หลุดจาก object:

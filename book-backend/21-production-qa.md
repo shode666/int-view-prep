@@ -71,7 +71,7 @@ public class OrderService {
 3. **Missing index / lock contention** — query ที่ scan ตาราง + row lock ที่ทุกคนแย่งแถวเดียว (hot row)
 4. ไม่มี cache ให้ read ซ้ำๆ, external call ใน request path ที่ไม่มี timeout → thread ค้างสะสม
 
-เครื่องมือ: APM ดู p99 breakdown ว่าเวลาไปกองที่ไหน (DB? external? GC?), `EXPLAIN ANALYZE` query ที่ช้า, pool metrics — **"ผมไม่เดา ผมดูว่าเวลาหายไปไหน"**
+เครื่องมือ: APM (Application Performance Monitoring — เครื่องมือ trace ราย request ที่ breakdown เวลาต่อ layer ให้) ดู p99 breakdown ว่าเวลาไปกองที่ไหน (DB? external? GC?), `EXPLAIN ANALYZE` query ที่ช้า, pool metrics — **"ผมไม่เดา ผมดูว่าเวลาหายไปไหน"**
 
 ### 4. HikariCP หมด pool ทั้งที่ DB CPU ต่ำกว่า 20%
 
@@ -311,7 +311,7 @@ Distributed: (1) กลาง — Redis + Lua script (เช็ค+หัก tok
 
 ### 27. ต้อง backfill/แปลงข้อมูลตารางใหญ่ที่ production ใช้งานอยู่ — ทำยังไงไม่ให้ล้ม
 
-กติกา: **ห้าม UPDATE ทั้งตารางใน statement เดียว** — lock มหาศาล + WAL บวม + replica lag พุ่ง + vacuum ตามเช็ดไม่ทัน
+กติกา: **ห้าม UPDATE ทั้งตารางใน statement เดียว** — lock มหาศาล + WAL (Write-Ahead Log — บันทึกการเปลี่ยนแปลงก่อนเขียนลงตารางจริง) บวม + replica lag พุ่ง + vacuum ตามเช็ดไม่ทัน
 
 ท่ามาตรฐาน: (1) **batch เล็ก** — `UPDATE ... WHERE id BETWEEN ? AND ?` ครั้งละ 1–10K แถว (2) **หายใจระหว่าง batch** — sleep เล็กน้อย + ดู replication lag เป็น feedback (lag ขึ้น = ชะลอ) (3) เดินด้วย **job ที่ resume ได้** — จดตำแหน่งล่าสุดลง table (คุ้นไหมครับ — มันคือ relay/sweeper อีกร่าง: กวาดทีละก้อน จดความคืบหน้า ตายแล้วเดินต่อได้) (4) ทำนอก peak + มี kill switch (5) ตรวจผลด้วย count/checksum ก่อนสลับไปใช้
 

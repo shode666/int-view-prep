@@ -173,7 +173,7 @@ Flow ข้าม 6 service จะ debug ได้ต้องมี:
 2. **"Retry แล้ว payment ซ้ำ กันยังไง"** → Idempotency key ต่อ payment intent, unique constraint ฝั่ง DB, gateway เจ้าใหญ่รองรับ key นี้อยู่แล้ว (Stripe/Omise) — ตอบให้ครบทั้งฝั่งเราและฝั่ง provider
 3. **"Save DB สำเร็จแต่ publish event fail ทำไง"** → นี่คือ dual-write → Outbox pattern เต็มรูป + ราคาที่ตาม (event ซ้ำ → consumer idempotent)
 4. **"Queue ส่ง event ซ้ำ consumer ทำไง"** → dedupe ด้วย event_id ใน **transaction เดียวกับ side effect** + ack หลัง commit (บท 9) — และชี้ว่า exactly-once delivery ไม่มีจริง มีแต่ effectively-once ที่ปลายทาง
-5. **"Service ช้าลากระบบล่มต่อกัน"** → ชุดคำตอบบท 10: timeout → bulkhead → breaker → fallback + load shedding
+5. **"Service ช้าลากระบบล่มต่อกัน"** → ชุดคำตอบบท 10: timeout → bulkhead → breaker → fallback + load shedding (**โยนงานล้นทิ้งตั้งแต่ขาเข้าเมื่อระบบเต็ม** — ตอบ 429/503 ทันทีให้ request ที่รับไม่ไหว แทนที่จะรับทุกตัวไว้แล้วช้าตายทั้งกอง; เลือกทิ้งตาม priority ได้ เช่น งาน batch หลบให้ checkout — บท 21)
 
 สังเกต: ทั้งห้าข้อคือเรื่องเดียวกันหมด — **โลกไม่แน่นอน, ทำซ้ำได้อย่างปลอดภัย, atomic เฉพาะใน DB เดียว, ชดเชยแทน rollback**
 

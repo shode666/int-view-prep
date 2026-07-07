@@ -27,7 +27,7 @@
 สาเหตุ: concern เดียวถูกหั่นกระจาย (ค่า VAT อยู่ใน controller, service, report, email template) · ทางออก: รวม concern ที่เปลี่ยนพร้อมกันไว้ที่เดียว (บท 2 — cohesion) แล้วให้ที่อื่นเรียกใช้
 
 **Circular Dependency** — A import B, B import A; ใน microservice: order เรียก customer, customer เรียก order
-ทางออก: หา concept ที่สามที่ทั้งคู่ควรพึ่ง (แตก shared kernel ออกมา), กลับทิศด้วย interface (DIP), หรือยอมรับว่าจริงๆ มันคือ module เดียวที่ถูกผ่าผิดเส้น — Go ห้ามที่ compile time ซึ่งบังคับให้คิดเรื่องนี้ตั้งแต่วันแรก (บท 2)
+ทางออก: หา concept ที่สามที่ทั้งคู่ควรพึ่ง (แตก shared kernel ออกมา — โมดูลกลางที่เก็บของที่ทั้งสองใช้ร่วม เช่น A กับ B ต่างพึ่ง `Money`/`CustomerId` ก็ย้ายไปไว้ module C แล้วทั้งคู่พึ่ง C แทนพึ่งกันเอง วงจึงขาด), กลับทิศด้วย interface (DIP — ให้ฝั่งที่ถูกเรียกประกาศ interface แล้วอีกฝั่ง implement วงลูกศรจึงชี้ทางเดียว), หรือยอมรับว่าจริงๆ มันคือ module เดียวที่ถูกผ่าผิดเส้น — Go ห้ามที่ compile time ซึ่งบังคับให้คิดเรื่องนี้ตั้งแต่วันแรก (บท 2)
 
 ## Anti-patterns ระดับ Distributed System
 

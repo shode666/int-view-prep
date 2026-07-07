@@ -64,7 +64,7 @@
 ## ออกแบบ Event Schema
 
 - **ตั้งชื่อจากมุม domain ไม่ใช่มุม technical**: `OrderPlaced` ไม่ใช่ `OrderTableInserted` — event คือ API สาธารณะ ผูกกับ business ไม่ใช่ schema DB
-- **Fat event vs thin event**: thin (id อย่างเดียว แล้ว consumer มา query กลับ) ลด payload แต่สร้าง sync coupling กลับมา + read amplification / fat (ใส่ข้อมูลที่ consumer ต้องใช้) ตัด round-trip แต่ต้องระวังกลายเป็น dump ทั้ง entity — เกณฑ์: ใส่ **ข้อเท็จจริง ณ เวลาที่เกิด** ที่ consumer ส่วนใหญ่ต้องใช้ (order id, รายการ, ยอด, customer id) ไม่ใส่ของที่แปรผัน (สถานะปัจจุบัน — เดี๋ยวก็ stale)
+- **Fat event vs thin event**: thin (id อย่างเดียว แล้ว consumer มา query กลับ) ลด payload แต่สร้าง sync coupling กลับมา + read amplification (event หนึ่งตัวมี consumer 10 ตัว = query ยิงกลับหา service ต้นทาง 10 ครั้งต่อ 1 event — โหลดอ่านทวีคูณตามจำนวน consumer และผู้ต้นทางกลายเป็นคอขวด) / fat (ใส่ข้อมูลที่ consumer ต้องใช้) ตัด round-trip แต่ต้องระวังกลายเป็น dump ทั้ง entity — เกณฑ์: ใส่ **ข้อเท็จจริง ณ เวลาที่เกิด** ที่ consumer ส่วนใหญ่ต้องใช้ (order id, รายการ, ยอด, customer id) ไม่ใส่ของที่แปรผัน (สถานะปัจจุบัน — เดี๋ยวก็ stale)
 - **Versioning ต้องคิดวันแรก**: event ที่ publish แล้วคือ contract — เพิ่ม field ได้ (backward compatible), ห้ามลบ/เปลี่ยน type; ใส่ `version` ใน envelope; ถ้าต้องแตกจริงใช้ topic ใหม่แล้ว migrate consumer
 - **Envelope มาตรฐาน**: `event_id` (UUID — ใช้ dedupe), `occurred_at`, `correlation_id` (ไล่ flow ข้าม service — บท 11), `causation_id` (event ไหนทำให้เกิด)
 
@@ -111,7 +111,7 @@ void handleOrderPlaced(Message msg) {
 
 | | RabbitMQ — push | Kafka — pull |
 |---|---|---|
-| กลไก | broker ยัดใส่มือ consumer ทันที (คุม backpressure ด้วย prefetch limit) | consumer `poll()` เอง + **long polling** (ไม่ใช่ถามรัว — fetch request แขวนรอที่ broker จนมีของ) |
+| กลไก | broker ยัดใส่มือ consumer ทันที (คุม backpressure — กันผู้ส่งอัดของเร็วกว่าผู้รับกินทัน — ด้วย prefetch limit: จำกัดจำนวน message ที่ยังไม่ ack ที่ยอมค้างในมือ consumer ตัวเดียว) | consumer `poll()` เอง + **long polling** (ไม่ใช่ถามรัว — fetch request แขวนรอที่ broker จนมีของ) |
 | ปรัชญา | **smart broker** — จำสถานะราย message, ack แล้วลบ | **dumb broker** — เป็น append-only log, consumer ถือ offset เอง |
 | ผลตามมา | latency ต่ำ, เหมาะ task queue / routing ซับซ้อน | replay ได้ (ถอย offset), หลาย group อ่านอิสระแทบฟรี — เหมาะ event stream |
 

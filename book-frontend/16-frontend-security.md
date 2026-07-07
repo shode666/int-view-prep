@@ -178,7 +178,7 @@ const storage = FlutterSecureStorage(
 await storage.write(key: 'refresh_token', value: refreshToken);
 ```
 
-Hardening ที่ควรทำคู่กัน: **this-device-only / no-backup flag** (กันหลุดผ่าน cloud), **biometric gate** สำหรับแอป sensitive, **access token อายุสั้น + refresh rotation** (server หมุน refresh ทุกครั้ง + detect reuse — เจอ token เก่าถูกใช้ = เพิกถอนทั้งสาย), **เคลียร์ทุกที่ตอน logout** และจำว่า **JWT เพิกถอนยาก** (bearer — ใครถือก็ใช้ได้จนหมดอายุ) จึงต้อง TTL สั้น + มี denylist/introspection ฝั่ง server ถ้าต้อง revoke ทันที
+Hardening ที่ควรทำคู่กัน: **this-device-only / no-backup flag** (กันหลุดผ่าน cloud), **biometric gate** สำหรับแอป sensitive, **access token อายุสั้น + refresh rotation** (server หมุน refresh ทุกครั้ง + detect reuse — เจอ token เก่าถูกใช้ = เพิกถอนทั้งสาย), **เคลียร์ทุกที่ตอน logout**, **attestation** (การให้ OS พิสูจน์กับ server ว่า request มาจาก "แอปจริงของเราบนเครื่องที่ยังไม่ถูกดัดแปลง" — Play Integrity ฝั่ง Android / App Attest ฝั่ง iOS — กันคนถอด token ไปยิงผ่าน script หรือ emulator ที่ไม่ใช่แอปเรา) และจำว่า **JWT เพิกถอนยาก** (bearer — ใครถือก็ใช้ได้จนหมดอายุ) จึงต้อง TTL สั้น + มี denylist/introspection ฝั่ง server ถ้าต้อง revoke ทันที
 
 **CSRF ก็เปลี่ยน:** native ไม่มี "หน้าเว็บ origin อื่น" มาสั่งยิงแอปคุณ ความเสี่ยง CSRF จึงแทบไม่มี (นอกจากใช้ WebView) แนวทางที่นิยมบน mobile เลยเป็น **Bearer token ใน header** (อ่านจาก secure storage มาแนบเอง) ซึ่งตัด CSRF ไปในตัว — httpOnly cookie ยัง make sense เฉพาะเมื่อใช้ WebView เป็นหลัก หรืออยากได้ session parity กับเว็บ/ใช้ BFF ตัวเดียวกัน (บท 17)
 
@@ -208,12 +208,12 @@ Bearer token ทุกชนิด (JWT, session id, refresh token, pre-signed U
 > - **encrypt/decrypt** = ซ่อนข้อมูล · public **encrypt** → private **decrypt** ได้ข้อความกลับมา
 > - **sign/verify** = พิสูจน์ความแท้ (ไม่ซ่อน) · private **sign** → public **verify** ได้ **`true`/`false`** เท่านั้น
 >
-> `verify(signingInput, signature, publicKey) → true/false` — มันไม่ได้ "คายค่า" อะไรออกมาให้ไปหาเทียบต่อ มันรับ 3 อย่างที่มีอยู่แล้ว (ข้อมูล + ลายเซ็น + public key) แล้วตอบว่า "เข้ากันทาง math ไหม" จบในตัว · ข้อมูลใน proof (`htm`/`htu`/`jti`) **อ่านออกปกติ ไม่ได้ถูกซ่อน** — signature แค่การันตีว่ามันไม่ถูกแก้และมาจากคนถือ private key จริง (ความลับตอนส่งเป็นงานของ TLS คนละชั้น)
+> `verify(signingInput, signature, publicKey) → true/false` — มันไม่ได้ "คายค่า" อะไรออกมาให้ไปหาเทียบต่อ มันรับ 3 อย่างที่มีอยู่แล้ว (ข้อมูล + ลายเซ็น + public key) แล้วตอบว่า "เข้ากันทาง math ไหม" จบในตัว · ข้อมูลใน proof — `htm` (HTTP method ของ request นี้), `htu` (HTTP URI ที่ยิงไป), `jti` (id สุ่มไม่ซ้ำต่อ proof กัน replay) — **อ่านออกปกติ ไม่ได้ถูกซ่อน** สามค่านี้แหละที่ทำให้ proof "ผูกกับ request นี้ใบนี้เท่านั้น" (เซ็นทับ method+url+id) ขโมย proof ไปยิง endpoint อื่นหรือยิงซ้ำไม่ได้ — signature แค่การันตีว่ามันไม่ถูกแก้และมาจากคนถือ private key จริง (ความลับตอนส่งเป็นงานของ TLS คนละชั้น)
 
-ดังนั้น server verify proof เป็น **2 ขั้นแยกกัน อย่าปน**:
+ดังนั้น server verify proof เป็น **2 ขั้นแยกกัน อย่าปน** — โดยมี 2 ที่ที่เก็บ public key คนละรูป: **`jwk` (JSON Web Key — public key ตัวเต็มที่ app แนบมาในหัวของ proof)** กับ **`cnf.jkt` (confirmation claim ในตัว access token — เก็บแค่ `jkt` = thumbprint/แฮชย่อของ public key ที่ token ผูกไว้ตอนออก)**:
 
-1. **verify ลายเซ็น** ด้วย `jwk` ในproof → ได้ `true/false` ("ถือ key ที่คู่กับ jwk นี้ไหม")
-2. **เทียบ thumbprint** — `hash(jwk) == cnf.jkt` ในaccess token → ("ใช่ key ตัวที่ token เป็นเจ้าของไหม")
+1. **verify ลายเซ็น** ด้วย `jwk` ในproof → ได้ `true/false` ("ถือ private key ที่คู่กับ jwk นี้จริงไหม")
+2. **เทียบ thumbprint** — `hash(jwk) == cnf.jkt` ในaccess token → ("`jwk` ที่เพิ่ง verify ผ่าน คือ key ตัวเดียวกับที่ token เป็นเจ้าของไหม" — กันคนเอา key ของตัวเองมาเซ็น proof สวย ๆ แล้วแนบ token ของคนอื่น)
 
 ขั้น 1 คือ verify (คืน bool ไม่มีค่าให้เทียบ) · ขั้น 2 ต่างหากที่ "เอาค่าไปเทียบว่าตรงไหม" (thumbprint เทียบ `cnf.jkt`) — คนมักเอาสองขั้นนี้ไปปนกันแล้วนึกว่า verify ต้องคายค่าออกมา
 

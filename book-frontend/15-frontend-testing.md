@@ -120,6 +120,8 @@ act(() => result.current.increment());     // การเปลี่ยน sta
 expect(result.current.count).toBe(6);
 ```
 
+`act()` คือฟังก์ชันของ React ที่ห่อโค้ดซึ่ง trigger การอัปเดต state — มันบอก React ว่า "โค้ดข้างในนี้ทำให้เกิด state change ให้ flush การ re-render + effect ให้เสร็จก่อนออกจากบล็อก" ถ้าเรียก `increment()` นอก `act` state จะเปลี่ยนแต่ DOM/`result.current` อาจยังไม่ทันอัปเดตตอน assert (แถม React พ่น warning "not wrapped in act") — RTL ห่อ `render`/`userEvent`/`findBy` ด้วย `act` ให้อัตโนมัติอยู่แล้ว (จึงไม่ต้องเขียนเองในเทสปกติ) แต่ตอนสั่ง state เปลี่ยน "ตรงๆ" เองอย่างใน `renderHook` หรือหมุน fake timer ต้องห่อ `act` เอง
+
 กติกาเดิมยังใช้: ถ้า hook ถูกใช้ใน component เดียว test ผ่าน component ตรงๆ ดีกว่า — renderHook เหมาะกับ hook ที่เป็น library ภายใน (ใช้หลายที่ ควรมี contract ของตัวเอง)
 
 **Timer / debounce** — test debounce 300ms ห้ามรอจริง ใช้ fake timers แล้ว**หมุนเวลาเอง**เหมือนหมุนเข็มนาฬิกาแทนการนั่งเฝ้า:

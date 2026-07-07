@@ -212,7 +212,7 @@ paths:
 ถ้าขาดข้อ 2 spec อาจสวยแต่ไม่สะท้อนสิ่งที่ consumer ใช้จริง  
 ถ้าขาดข้อ 1 provider อาจคุยว่าตรง spec แต่ runtime หลุดไปแล้ว
 
-แนวตอบสัมภาษณ์ที่ได้คะแนน: *"ผมไม่อยากให้ FE กับ BE คุยกันด้วย wiki หรือ Postman snapshot ผมอยากให้มี machine-readable contract เดียว แล้วให้ทั้ง generated type, MSW handler, provider validation และ compatibility gate วิ่งจากไฟล์เดียวกัน"*
+แนวตอบสัมภาษณ์ที่ได้คะแนน: *"ผมไม่อยากให้ FE กับ BE คุยกันด้วย wiki หรือ Postman snapshot ผมอยากให้มี machine-readable contract เดียว แล้วให้ทั้ง generated type, MSW (Mock Service Worker — library ฝั่ง frontend ที่ดัก network request ใน test/dev แล้วตอบ mock ตาม spec) handler, provider validation และ compatibility gate วิ่งจากไฟล์เดียวกัน"*
 
 ## Testability คือเกณฑ์ design ไม่ใช่เรื่องของ QA
 

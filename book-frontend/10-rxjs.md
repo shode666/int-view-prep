@@ -142,7 +142,7 @@ uploadAll$ = from(files).pipe(
 // user แก้หลายรายการรัวๆ — ต้อง save ตามลำดับที่แก้ ห้ามสลับ
 save$ = this.edits$.pipe(
   concatMap(edit => this.http.put(`/api/items/${edit.id}`, edit))
-  // งานถัดไปเริ่มต่อเมื่องานก่อนหน้า complete — FIFO เหมือน queue ที่ partition เดียว
+  // งานถัดไปเริ่มต่อเมื่องานก่อนหน้า complete — FIFO (First-In-First-Out: มาก่อนเสร็จก่อน) เหมือน queue ที่ partition เดียว
 );
 ```
 

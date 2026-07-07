@@ -311,7 +311,7 @@ BFF ในหัวข้อ rendering ข้างบนคือการ**ร
 
 **property ที่ได้:** refresh token / client_secret ไม่เคยลงเครื่อง · sessionId ผูก device key → ขโมยไปเปล่า ๆ เซ็นไม่ได้ = ใช้ไม่ได้ (บท 16) · เพิกถอนทันทีที่ BFF ไม่ต้องรอ JWT หมดอายุ
 
-**หมายเหตุ OAuth:** การส่ง username/password ตรงไป BFF (Resource Owner Password) ใช้ได้กับ first-party app แต่แบบปลอดภัยกว่าคือ **Authorization Code + PKCE**: app เปิด system browser ไปหน้า login ของ IdP โดยตรง (แอปไม่เคยเห็น password), IdP คืน authorization code, BFF เอา code ไปแลก token — โครง BFF เหมือนเดิม เปลี่ยนแค่แอปไม่แตะ password + ได้ SSO/MFA ฟรี
+**หมายเหตุ OAuth:** การส่ง username/password ตรงไป BFF (Resource Owner Password) ใช้ได้กับ first-party app แต่แบบปลอดภัยกว่าคือ **Authorization Code + PKCE (Proof Key for Code Exchange)**: app เปิด system browser ไปหน้า login ของ IdP โดยตรง (แอปไม่เคยเห็น password), IdP คืน authorization code, BFF เอา code ไปแลก token — ตัว PKCE คือกลไกกัน "code ถูกดักกลางทางแล้วเอาไปแลก token" โดยไม่ต้องพึ่ง client secret: ตอนเริ่ม flow app สุ่มค่า `code_verifier` เก็บไว้กับตัว แล้วส่งแค่ hash ของมัน (`code_challenge`) ไปกับ authorization request → ตอนแลก code ต้องแนบ `code_verifier` ตัวจริงมาด้วย server ถึงยอมแลก คนที่ดัก code ได้แต่ไม่มี verifier จึงแลกไม่ได้ — โครง BFF เหมือนเดิม เปลี่ยนแค่แอปไม่แตะ password + ได้ SSO/MFA ฟรี
 
 **session lifecycle — sessionId ต้องไม่ใช่ pointer นิ่ง:** เพราะเป็น server-side state จึงใส่วงจรชีวิตได้เต็ม — **idle timeout + absolute timeout + rotation** ถ้า sessionId หลุด: (1) **เพิกถอนทันที** ที่ Redis (ข้อได้เปรียบเหนือ stateless JWT), (2) **rotation + reuse detection** — เจอ sessionId เก่าที่หมุนไปแล้วถูกใช้ = มีสองมือถือใบเดียว → kill ทั้งสาย, (3) **binding ด้วย DPoP/mTLS** (บท 16) ให้ possession ไม่พอ ต้องเซ็นได้ด้วย
 

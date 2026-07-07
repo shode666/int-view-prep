@@ -128,7 +128,9 @@ public class PlaceOrderUseCase {
 ### กฎเหล็กที่โยงไปบท 11
 
 **ใน Unit of Work ห้ามมี external call** — payment API, Kafka publish, email ไม่ rollback ตาม DB
-ถ้า use case ต้อง "commit DB **และ** ส่ง event" → นั่นคือปัญหา dual-write ซึ่งคำตอบที่ถูกคือ **Outbox pattern** (บท 11) ไม่ใช่การภาวนาว่า network จะไม่พังระหว่างสองบรรทัดนั้น
+ถ้า use case ต้อง "commit DB **และ** ส่ง event" → นั่นคือปัญหา dual-write ซึ่งคำตอบที่ถูกคือ **Outbox pattern** ไม่ใช่การภาวนาว่า network จะไม่พังระหว่างสองบรรทัดนั้น
+
+Outbox ทำงานยังไงโดยย่อ: แทนที่จะยิง event ออกไปตรงๆ ให้ **เขียน event ลงตาราง `outbox` ใน DB เดียวกันภายใต้ transaction เดียวกับ business data** — พอทั้งคู่อยู่ใน UoW เดียว มันจึง commit/rollback พร้อมกัน (ไม่มีทางที่ order ถูกบันทึกแต่ event หาย หรือกลับกัน) แล้วมี process แยกคอย poll ตาราง `outbox` ไปส่ง event จริงทีหลังแบบ at-least-once — เท่ากับแปลงปัญหา "เขียนสองที่พร้อมกันให้ atomic" (ทำไม่ได้) ให้เป็น "เขียน DB ที่เดียว" (atomic อยู่แล้ว) รายละเอียดเต็ม + การกัน event ซ้ำอยู่บท 11
 
 ## Testing มุมมองของชั้นนี้ (โยงบท 12)
 
@@ -136,7 +138,7 @@ public class PlaceOrderUseCase {
 |---|---|
 | Domain (`Order.place`) | unit test ล้วน — ไม่มี mock เลย เร็วระดับ ms |
 | Use case | fake repository ใน memory — test orchestration + ลำดับ |
-| Repository จริง | integration test กับ DB จริง (testcontainers) + contract test ชุดเดียวกับ fake |
+| Repository จริง | integration test กับ DB จริง (Testcontainers — library ที่สั่งรัน DB จริงใน Docker ชั่วคราวต่อ test แล้วลบทิ้ง จึง test กับ engine จริงไม่ใช่ mock) + contract test ชุดเดียวกับ fake |
 
 ถ้า test domain ต้องใช้ mock = domain แอบพึ่ง I/O อยู่ — design ฟ้องตัวเองผ่าน test เสมอ
 

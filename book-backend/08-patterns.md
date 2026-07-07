@@ -143,7 +143,7 @@ var result = checkout.placeOrder(cart, method);
 
 **ปัญหา**: constructor รับ 9 parameter, ครึ่งหนึ่ง optional, สอง boolean ติดกัน — `new Report(true, false, null, null, "pdf", true)` อ่านไม่ออกและสลับลำดับแล้ว compiler ไม่ช่วย
 
-**หัวใจ**: ประกอบ object ทีละส่วนด้วยชื่อชัดๆ แล้วปิดท้ายด้วย build ที่ validate ความครบ
+**หัวใจ**: ประกอบ object ทีละส่วนด้วยชื่อชัดๆ แล้วปิดท้ายด้วย build ที่ validate ความครบ — บรรทัดเดิมด้านบนกลายเป็น `Report.builder().format("pdf").inlineCss(true).build()` (แต่ละ field มีชื่อกำกับ สลับลำดับไม่ได้ compiler ช่วย, `build()` โยน error ถ้า field บังคับขาด)
 
 **จุดที่ต้องรู้ต่อภาษา (สำคัญกว่าตัว pattern)**:
 
@@ -162,7 +162,7 @@ func WithTimeout(d time.Duration) Option { return func(s *Server) { s.timeout = 
 
 ## Pattern เสริมที่ควรรู้จักไว้
 
-- **Command** — ห่อ "คำสั่ง + ข้อมูลของมัน" เป็น object → ต่อคิวได้, retry ได้, undo ได้; ใน backend คือ message/job ใน queue นั่นเอง (`PlaceOrderCommand` ในบท 5 คือญาติเบาของมัน)
+- **Command** — ห่อ "คำสั่ง + ข้อมูลของมัน" เป็น object → ต่อคิวได้ (object มีของครบในตัว ส่งข้ามเวลา/ข้ามเครื่องได้), retry ได้ (เก็บไว้ยิงซ้ำ), undo ได้ (command เก็บข้อมูลพอที่จะย้อนตัวเอง — บันทึก state ก่อนทำ หรือจับคู่กับ command ตรงข้าม เช่น `AddItem` ↔ `RemoveItem`); ใน backend คือ message/job ใน queue นั่นเอง (`PlaceOrderCommand` ในบท 5 คือญาติเบาของมัน) และ compensating action ของ saga (บท 11) คือ undo เวอร์ชันข้าม service
 - **Template Method vs Pipeline** — โครงงานตายตัวแต่บางขั้นเปลี่ยนได้: Template Method ใช้ inheritance (นิยมใน Java framework) แต่สำเนียงปัจจุบันชอบ **Pipeline/middleware composition** มากกว่า (Express/Gin middleware, `http.Handler` ซ้อนชั้น) เพราะเป็น composition (บท 1)
 - **Specification** — ห่อเงื่อนไข business เป็น object ที่ combine ได้ (`spec1.and(spec2)`) — คุ้มเมื่อเงื่อนไขต้อง reuse ทั้งใน memory และแปลงเป็น query; ถ้าไม่ถึงขั้นนั้น function ธรรมดาพอ
 
