@@ -4,7 +4,7 @@ Node.js pair-programming interview prep kit. TypeScript + pnpm + Vitest.
 
 ## Foundations Books
 
-  [Frontend Book](/book-frontend/) Fundamentals and addressing potential oversights in Frontend development.
+  [Frontend Book](/book-frontend/) Fundamentals and addressing potential oversights in Frontend development.<br>
   [Backend book](/book-backend/) As so foundations and addressing potential oversights in Backend development.
 
 ## Quick start
