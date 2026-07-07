@@ -159,3 +159,23 @@
 - อ้างอิงกันได้ชัดขึ้น
 - ใช้ภาษาที่สม่ำเสมอขึ้น
 - แม่นยำพอสำหรับผู้อ่านระดับ senior
+
+## เพิ่มเนื้อหาใหม่ (รอบต่อมา — 7 ก.ค. 2026): Mobile Auth & BFF Architecture
+
+จากการอภิปรายเชิงลึกกับผู้เขียน เพิ่มชุดเนื้อหาที่เล่มยังไม่ครอบคลุม — mobile token/auth และ BFF architecture — แยกลง 2 บทตามธีม (เต็มสูตร: มีโค้ด, diagram, ตาราง, คำถามสัมภาษณ์):
+
+**บท 16 (Frontend Security) — เพิ่ม 2 หัวข้อ + คำถามสัมภาษณ์ 2 ข้อ:**
+- `## Mobile — เมื่อ Threat Model เปลี่ยน Token เก็บไหน` — httpOnly ไม่ map กับ native (ไม่มี DOM/XSS), hardware-backed secure storage (Keychain/Keystore), แยกที่เก็บ access/refresh, hardening (this-device-only, biometric, rotation), CSRF บน mobile แทบไม่มี → Bearer header, ตารางเทียบ threat model web vs mobile
+- `## Bearer Token มีจุดตายเดียวกัน — Proof-of-Possession` — DPoP/mTLS, สร้าง key pair ใน Secure Enclave/Keystore + วิธีได้ public key (โค้ด Android Keystore + RN), ทำไมผูก/encrypt ด้วย deviceId ผิด (id ≠ secret)
+- คำถามข้อ 7 (เก็บ token ใน mobile) และ 8 (bearer ถูกขโมยแล้วยังใช้ได้ — PoP)
+
+**บท 17 (System Design & Production) — เพิ่ม 2 หัวข้อ + คำถามสัมภาษณ์ 2 ข้อ:**
+- `## BFF กับ Auth — เก็บ Token จริงออกจาก Client` — full login flow (device key → login → API call → refresh โปร่งใส → logout), OAuth code+PKCE vs password-to-BFF, session lifecycle + revocation, และหัวข้อย่อย `### BFF อยู่บน critical path` (stateless + Redis HA, SPOF ย้ายไป session store, hybrid token-handler)
+- `## Control Plane vs Data Plane — อย่าขนของใหญ่ผ่าน BFF` — pre-signed URL (upload/download), capability-based (storage ตรวจลายเซ็นไม่ใช่ JWT), async job สำหรับ report gen
+- คำถามข้อ 7 (auth ให้ token ไม่หลุด client) และ 8 (ไฟล์ใหญ่ผ่าน BFF ไหม)
+
+**cross-ref:** บท 16 ↔ 17 ผูกกันสองทาง (16 ชี้ไป 17 เรื่อง BFF/session lifecycle, 17 ชี้กลับ 16 เรื่อง token storage/PoP) + โยงเล่ม backend บท 6/9/10/11/20 · ตรวจแล้ว code fence สมดุล, markdown เรนเดอร์ถูก, ตัวย่อ (DPoP, PoP, mTLS, IdP, KDF, TEE, JWK, SPKI, EME) กางคำเต็ม ณ จุดแรก
+
+**เพิ่มเติม (รอบย่อย — verify ≠ decrypt):** บท 16 (ส่วน Proof-of-Possession) เพิ่ม blockquote เน้นว่า **sign/verify ไม่ใช่ encrypt/decrypt** — `verify() → true/false` ไม่ได้คายค่ามาให้เทียบ (แก้ misconception ที่พบบ่อยว่า verify เหมือน decrypt) + แยก server verify เป็น 2 ขั้นชัด (verify ลายเซ็น = bool, เทียบ thumbprint กับ cnf.jkt = การเทียบค่า)
+
+**เพิ่มเติม (รอบย่อย):** บท 17 เพิ่ม subsection `### BFF กับ DPoP — คนละชั้น อย่าสับสน` (ใต้ BFF Auth) — แยกให้ชัดว่า BFF = สถาปัตยกรรม (token อยู่ไหน) vs DPoP = mechanism (พิสูจน์ถือ key), ตาราง 2 โมเดล (A: BFF/sessionId vs B: DPoP ตรง), ตารางเลือกตาม platform, และการใช้ร่วมกัน (DPoP ผูก sessionId เมื่อมี BFF)
