@@ -2,6 +2,11 @@
 
 Node.js pair-programming interview prep kit. TypeScript + pnpm + Vitest.
 
+## Foundations Books
+
+  [Frontend Book](/book-frontend/) Fundamentals and addressing potential oversights in Frontend development.
+  [Backend book](/book-backend/) As so foundations and addressing potential oversights in Backend development.
+
 ## Quick start
 
 ```bash
@@ -45,3 +50,4 @@ To reset an exercise, just restore the stub from git: `git checkout src/<file>`.
 - If stuck > 2 min, say what you're thinking; silence is the only failure mode.
 
 See `NOTES.md` for a Node.js theory cheat-sheet (event loop, streams, etc.).
+# interview-prep
