@@ -56,7 +56,7 @@ const results: R[] = new Array(items.length);
   const worker = async () => {
     while (cursor < items.length) {
       const i = cursor++;                // จองงานของตัวเอง
-      results[i] = await fn(items[i], i); // ทำ → วางผลตามช่อง index
+      results[i] = await fn(items[i]!, i); // ทำ → วางผลตามช่อง index
     }
   };
 
